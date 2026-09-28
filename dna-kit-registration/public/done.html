@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kit registered</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+.wrap{max-width:520px;margin:0 auto;padding-top:calc(40px + env(safe-area-inset-top,0px));text-align:center}
+.tick{width:84px;height:84px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto 18px}
+.wait{width:84px;height:84px;border-radius:50%;background:var(--warn-soft);display:grid;place-items:center;margin:0 auto 18px;color:var(--warn);font-size:34px;font-weight:700}
+h1{font-size:28px;font-weight:700;letter-spacing:-.015em}
+.codebig{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:.06em;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;margin:18px 0;overflow-wrap:anywhere}
+ol{text-align:left;margin:18px 0 0;padding-left:22px;display:grid;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap" id="out"><p class="lede" style="margin:0 auto">Checking your payment…</p></div>
+<script>
+(async function(){
+  const out = document.getElementById('out');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const sid = new URLSearchParams(location.search).get('session_id');
+  async function check(){ const r = await fetch('/api/public/confirm?session_id=' + encodeURIComponent(sid || '')); const j = await r.json(); if (!r.ok) throw new Error(j.error); return j; }
+  let j; try { j = await check(); if (!j.paid) { await new Promise(r => setTimeout(r, 3000)); j = await check(); } }
+  catch(e){ out.innerHTML = `<div class="notice bad" style="text-align:left">${esc(e.message || 'Something went wrong.')}</div>`; return; }
+  if (j.paid) {
+    out.innerHTML = `<div class="tick"><svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>You're registered, ${esc(j.firstName)}</h1>
+      <p class="lede" style="margin:8px auto 0">Payment received. Show this screen to a member of staff.</p>
+      <div class="codebig">Kit ${esc(j.code)}</div>
+      ${j.receiptUrl ? `<a class="btn" href="${esc(j.receiptUrl)}" target="_blank" rel="noopener">View receipt</a>` : ''}
+      <ol class="panel" style="list-style-position:inside;padding-left:20px"><li>Put 5 drops of blood on the spots on your card.</li><li>Let the card dry, then place it in the bag.</li><li>Hand the bag to a member of staff.</li></ol>`;
+  } else {
+    out.innerHTML = `<div class="wait">!</div><h1>Payment not confirmed yet</h1>
+      <p class="lede" style="margin:8px auto 0">Your details are saved for kit <span class="mono">${esc(j.code)}</span>. Please show this screen to a member of staff.</p>
+      <p style="margin-top:18px"><button class="btn" onclick="location.reload()">Check again</button></p>`;
+  }
+})();
+</script>
+</body>
+</html>

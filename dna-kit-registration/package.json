@@ -1,0 +1,9 @@
+{
+  "name": "dna-kit-registration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Customer self-registration and lab barcode lookup for DNA test kits, with Stripe payments",
+  "main": "server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": { "start": "node --disable-warning=ExperimentalWarning server.js" }
+}

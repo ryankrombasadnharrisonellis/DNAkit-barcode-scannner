@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Staff sign in · DNA Kit Tracker</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/app.css">
+<style>.wrap{max-width:400px;margin:0 auto;padding-top:12vh}h1{font-size:24px;font-weight:700;margin:18px 0 4px}</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandline"><span class="logo" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 1c0 4 8 4 8 7s-8 3-8 7M12 1c0 4-8 4-8 7s8 3 8 7" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round"/></svg></span>DNA Kit Tracker</div>
+  <h1>Staff sign in</h1>
+  <p class="lede" style="margin-bottom:18px">Customer details are only visible to signed-in staff.</p>
+  <form id="f" class="panel stack">
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required></div>
+    <div id="e" class="notice bad" hidden></div>
+    <button class="btn primary block" type="submit">Sign in</button>
+  </form>
+</div>
+<script>
+document.getElementById('f').addEventListener('submit', async ev => {
+  ev.preventDefault(); const e = document.getElementById('e');
+  const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('pw').value }) });
+  if (r.ok) location.reload(); else { const j = await r.json().catch(()=>({})); e.textContent = j.error || 'Could not sign in.'; e.hidden = false; }
+});
+</script>
+</body>
+</html>

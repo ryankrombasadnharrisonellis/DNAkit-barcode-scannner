@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Register your DNA kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+.wrap{max-width:520px;margin:0 auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.steps{display:flex;gap:6px}
+.steps span{width:28px;height:4px;border-radius:2px;background:var(--line)}
+.steps span.on{background:var(--accent)}
+h1{font-size:26px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.card-hint{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card-hint svg{flex:none}
+#reader{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:220px}
+#reader video{width:100%!important;display:block}
+.codebig{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:.06em;text-align:center;background:var(--sunk);border-radius:8px;padding:14px;overflow-wrap:anywhere}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:15px}
+.check input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--accent)}
+.price{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:14px;font-weight:600}
+.price b{font-size:20px}
+.divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+footer{margin-top:28px;font-size:13px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandline"><span class="logo" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 1c0 4 8 4 8 7s-8 3-8 7M12 1c0 4-8 4-8 7s8 3 8 7" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round"/></svg></span><span id="company">DNA kit registration</span></div>
+    <div class="steps" aria-hidden="true"><span id="s1" class="on"></span><span id="s2"></span><span id="s3"></span></div>
+  </header>
+
+  <!-- STEP 1: kit barcode -->
+  <section id="step1" class="stack">
+    <div>
+      <div class="eyebrow">Step 1 of 3</div>
+      <h1>Scan the barcode on the back of your card</h1>
+      <p class="lede">This links your details to your blood sample, so the lab knows it's yours.</p>
+    </div>
+    <div id="cancelMsg" class="notice warn" hidden>Payment was cancelled. Scan your card again to finish registering.</div>
+    <div class="card-hint">
+      <svg width="64" height="42" viewBox="0 0 64 42" fill="none" aria-hidden="true"><rect x="1" y="1" width="62" height="40" rx="4" stroke="var(--muted)" stroke-width="1.5"/><path d="M12 12v18M15 12v18M19 12v18M21 12v18M25 12v18M29 12v18M31 12v18M35 12v18M39 12v18M41 12v18M45 12v18M49 12v18M52 12v18" stroke="var(--ink)" stroke-width="1.6"/></svg>
+      <span style="font-size:14px">Turn your card over. Hold your phone about 15 cm away so the whole barcode fits in the box.</span>
+    </div>
+
+    <div id="scanArea" hidden class="stack">
+      <div id="reader"></div>
+      <button class="btn" id="stopScan" type="button">Stop camera</button>
+    </div>
+    <button class="btn primary block" id="startScan" type="button">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 6V3h3M15 3h3v3M18 14v3h-3M5 17H2v-3M6 6v8M9 6v8M12 6v8M14 6v8" stroke="currentColor" stroke-width="1.6"/></svg>
+      Scan barcode with camera
+    </button>
+    <div id="camError" class="notice bad" hidden></div>
+
+    <div class="divider">or</div>
+    <button class="btn block" id="showType" type="button">Type the number instead</button>
+    <form id="typeForm" class="stack" hidden autocomplete="off">
+      <div class="field"><label for="code1">Number printed under the barcode</label><input id="code1" type="text" class="mono" inputmode="text" autocapitalize="characters" spellcheck="false"></div>
+      <div class="field"><label for="code2">Type it again to check</label><input id="code2" type="text" class="mono" inputmode="text" autocapitalize="characters" spellcheck="false"></div>
+      <button class="btn primary block" type="submit">Continue</button>
+    </form>
+    <div id="s1Error" class="notice bad" hidden></div>
+  </section>
+
+  <!-- STEP 1b: confirm scanned code -->
+  <section id="confirm" class="stack" hidden>
+    <div>
+      <div class="eyebrow">Step 1 of 3</div>
+      <h1>Is this the number on your card?</h1>
+      <p class="lede">Check it matches the number printed under the barcode.</p>
+    </div>
+    <div class="codebig" id="confirmCode"></div>
+    <button class="btn primary block" id="confirmYes" type="button">Yes, that's my card</button>
+    <button class="btn block" id="confirmNo" type="button">No, scan again</button>
+  </section>
+
+  <!-- STEP 2: details -->
+  <form id="step2" class="stack" hidden autocomplete="on" novalidate>
+    <div>
+      <div class="eyebrow">Step 2 of 3</div>
+      <h1>Your details</h1>
+      <p class="lede">Kit <span class="mono" id="kitLabel"></span>. Use the same name as on your ID.</p>
+    </div>
+    <div class="panel stack">
+      <div class="field"><label for="name">Full name</label><input id="name" type="text" autocomplete="name" required></div>
+      <div class="field"><label for="dob">Date of birth</label><input id="dob" type="date" autocomplete="bday" required max=""></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" inputmode="email" required><span class="hint">We send your receipt and results information here.</span></div>
+      <div class="field"><label for="phone">Phone <span class="hint">(optional)</span></label><input id="phone" type="tel" autocomplete="tel" inputmode="tel"></div>
+      <label class="check"><input type="checkbox" id="consent"><span>I agree that <span id="companyName">the company</span> may process my personal and genetic data to carry out this DNA test, as described in the <a id="privacyLink" href="#" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+      <div class="price" id="priceRow" hidden><span id="productName">DNA test</span><b id="price" class="num"></b></div>
+    </div>
+    <div id="s2Error" class="notice bad" hidden></div>
+    <button class="btn primary block" id="submit" type="submit">Continue to payment</button>
+    <button class="btn block" id="back" type="button">Back</button>
+  </form>
+
+  <!-- STEP 3 (no Stripe): saved -->
+  <section id="savedNoPay" class="stack" hidden>
+    <div class="notice ok"><strong>Your details are saved.</strong></div>
+    <h1>Please pay at the desk</h1>
+    <p class="lede">Show this screen to a member of staff. Kit <span class="mono" id="kitLabel2"></span>.</p>
+  </section>
+
+  <footer>Your details are sent securely and only seen by our lab staff.</footer>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const norm = s => String(s||'').toUpperCase().replace(/\s+/g,'').replace(/[^A-Z0-9_\-]/g,'');
+let cfg = {}, code = '', scanner = null;
+
+function show(id){
+  ['step1','confirm','step2','savedNoPay'].forEach(s => $('#'+s).hidden = s !== id);
+  $('#s1').className = 'on';
+  $('#s2').className = (id === 'step2' || id === 'savedNoPay') ? 'on' : '';
+  $('#s3').className = id === 'savedNoPay' ? 'on' : '';
+  window.scrollTo(0,0);
+}
+function err(el, msg){ const e = $(el); e.textContent = msg; e.hidden = !msg; }
+
+fetch('/api/public/config').then(r => r.json()).then(c => {
+  cfg = c;
+  $('#company').textContent = c.company || 'DNA kit registration';
+  $('#companyName').textContent = c.company || 'the company';
+  if (c.privacyUrl) $('#privacyLink').href = c.privacyUrl; else $('#privacyLink').removeAttribute('href');
+  if (c.stripe && c.price) { $('#priceRow').hidden = false; $('#price').textContent = c.price; $('#productName').textContent = c.product; }
+  else $('#submit').textContent = 'Register my kit';
+}).catch(()=>{});
+$('#dob').max = new Date().toISOString().slice(0,10);
+
+const params = new URLSearchParams(location.search);
+if (params.get('cancelled')) $('#cancelMsg').hidden = false;
+
+/* camera scanning */
+async function stopCamera(){
+  if (scanner) { try { await scanner.stop(); } catch(e){} try { scanner.clear(); } catch(e){} scanner = null; }
+  $('#scanArea').hidden = true; $('#startScan').hidden = false;
+}
+$('#startScan').addEventListener('click', async () => {
+  err('#camError', '');
+  if (!window.Html5Qrcode) { err('#camError', 'The scanner could not load. Type the number instead.'); return; }
+  $('#scanArea').hidden = false; $('#startScan').hidden = true;
+  try {
+    scanner = new Html5Qrcode('reader', { verbose:false, experimentalFeatures:{ useBarCodeDetectorIfSupported:true } });
+    await scanner.start({ facingMode:'environment' }, { fps:12, qrbox:(w,h) => ({ width: Math.min(w*0.9, 360), height: Math.min(h*0.5, 150) }), aspectRatio:1.5 },
+      async text => { const c = norm(text); if (c.length < 4) return; if (navigator.vibrate) navigator.vibrate(80); await stopCamera(); code = c; $('#confirmCode').textContent = c; show('confirm'); },
+      () => {});
+  } catch(e) {
+    await stopCamera();
+    err('#camError', 'We could not open your camera. Allow camera access in your browser settings, or type the number instead.');
+  }
+});
+$('#stopScan').addEventListener('click', stopCamera);
+
+$('#showType').addEventListener('click', () => { $('#typeForm').hidden = false; $('#showType').hidden = true; $('#code1').focus(); });
+$('#typeForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const a = norm($('#code1').value), b = norm($('#code2').value);
+  if (a.length < 4) return err('#s1Error', 'Type the full number printed under the barcode.');
+  if (a !== b) return err('#s1Error', "The two numbers don't match. Check the card and type them again.");
+  err('#s1Error', ''); code = a; checkCode();
+});
+$('#confirmYes').addEventListener('click', checkCode);
+$('#confirmNo').addEventListener('click', () => { show('step1'); $('#startScan').click(); });
+
+async function checkCode(){
+  try {
+    const r = await fetch('/api/public/check', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
+    const j = await r.json();
+    if (!r.ok) { show('step1'); return err('#s1Error', j.error || 'Something went wrong. Try again.'); }
+    if (j.state === 'taken') { show('step1'); return err('#s1Error', `Kit ${code} is already registered. If this is your card, please speak to a member of staff.`); }
+    $('#kitLabel').textContent = code; show('step2'); $('#name').focus();
+  } catch(e) { show('step1'); err('#s1Error', 'No connection. Check your internet and try again.'); }
+}
+
+$('#back').addEventListener('click', () => show('step1'));
+$('#step2').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = { code, name: $('#name').value, dob: $('#dob').value, email: $('#email').value, phone: $('#phone').value, consent: $('#consent').checked };
+  const miss = [];
+  if (body.name.trim().length < 2) miss.push('your full name');
+  if (!body.dob) miss.push('your date of birth');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) miss.push('a valid email');
+  if (miss.length) return err('#s2Error', 'Please enter ' + miss.join(', ') + '.');
+  if (!body.consent) return err('#s2Error', 'Please tick the consent box to continue.');
+  err('#s2Error', ''); $('#submit').disabled = true; $('#submit').textContent = 'Saving…';
+  try {
+    const r = await fetch('/api/public/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+    if (j.checkoutUrl) { location.href = j.checkoutUrl; return; }
+    $('#kitLabel2').textContent = j.code; show('savedNoPay');
+  } catch(ex) {
+    err('#s2Error', ex.message || 'No connection. Try again.');
+    $('#submit').disabled = false; $('#submit').textContent = cfg.stripe ? 'Continue to payment' : 'Register my kit';
+  }
+});
+})();
+</script>
+</body>
+</html>
